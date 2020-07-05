@@ -1,0 +1,13 @@
+*.exe
+*.dll
+*.so
+*.lib
+*.a
+*.o
+*.o
+
+*.compiled
+Bin/*/
+lib/
+*.ppr
+*.res
