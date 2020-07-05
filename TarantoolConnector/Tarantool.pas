@@ -5,7 +5,7 @@ unit Tarantool;
 interface
 
 uses
-  Classes, SysUtils, TarantoolConsts, TarantoolErrors, TarantoolTypes, IdTCPClient, base64, sha1, Generics.Collections, msgpack, windows;
+  Classes, SysUtils, TarantoolConsts, TarantoolErrors, TarantoolTypes, IdTCPClient, base64, sha1, Generics.Collections, msgpack;
 
 type
   TTCustomIndex=class;
@@ -259,19 +259,31 @@ begin
 end;
 
 procedure TTConnection.CheckRequestErrors(Code:Integer;Data:TMsgPackObject);
+var
+  IR,IR_index:IMsgPackObject;
 begin
-  if Code<IPROTO_REQUEST_TYPE_ERROR then
-    exit
-  else
-  begin
-    Code:=Code and(IPROTO_REQUEST_TYPE_ERROR-1);   
-    if Assigned(Data) then
-      MessageBox(0,PAnsiChar(Data.AsMap.GetEx(TMsgPackObject.Create(IPROTO_ERROR)).AsBytes),'Error!',0);
-    //case Code of
-    //else
-      raise TarantoolException.Create(TTError(Code));
-    //end;
-  end;
+    if Code<IPROTO_REQUEST_TYPE_ERROR then
+      exit
+    else
+    begin
+      Code:=Code and(IPROTO_REQUEST_TYPE_ERROR-1);
+      if Assigned(Data) then                            
+        try
+          IR_index:=TMsgPackObject.Create(IPROTO_ERROR);
+          IR:=Data.AsMap.GetEx(IR_index);
+          if Assigned(IR) and(IR.GetObjectType<>mptNil)then
+            raise TarantoolException.Create(TTError(Code),IR.AsBytes)
+          else
+            raise TarantoolException.Create(TTError(Code));
+        finally
+          //FreeAndNil(IR_index);
+        end
+      else
+        //case Code of
+        //else
+          raise TarantoolException.Create(TTError(Code));
+        //end;
+    end;
 end;
 
 procedure TTConnection.HandShake();
@@ -325,7 +337,6 @@ begin
                                                    
       try
         CheckRequestErrors(Request(IPROTO_REQUEST_TYPE_AUTHENTICATE,ReqData,OData),OData);
-        MessageBox(0,'Login Successfull!!!!!!!!','Login',0);
       finally            
         FreeAndNil(OData);
       end
@@ -516,12 +527,13 @@ destructor TTConnection.Destroy;
 begin
   FreeAndNil(TCPClient);
   FreeAndNil(_SpaceSpace);
-  with FSpaces.GetEnumerator do
-  begin
-    while MoveNext do
-      Current.Value.Free;
-    Free;
-  end;
+  if Assigned(FSpaces) then
+    with FSpaces.GetEnumerator do
+    begin
+      while MoveNext do
+        Current.Value.Free;
+      Free;
+    end;
   FreeAndNil(FSpaces);
 end;
 

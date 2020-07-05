@@ -6,10 +6,10 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, Menus,
-  Buttons, ExtCtrls, StdCtrls, Spin, Grids, ECTabCtrl, ECTypes,
-  ECGrid, Tarantool, TarantoolTypes, Generics.Collections, Unit2, NewSpace, NewIndex,
-  SpinEx, msgpack, vte_propertytree, RTTIGrids, Utils, LuiJSONLCLViews,
-  JSONFormMediator, extjsjson, fpjsonrpc, VirtualTrees, NewTuple;
+  ExtCtrls, StdCtrls, Spin, Grids, ECTabCtrl, ECTypes,
+  Tarantool, TarantoolTypes, Generics.Collections, Unit2, NewSpace, NewIndex,
+  msgpack, Utils,
+  NewTuple;
 
 type
 
@@ -113,60 +113,63 @@ begin
      while MPOSpaceData._Release<>0 do;
   Pointer(MPOSpaceData):=nil;
   if GroupBox3.Enabled then
-  begin
-    MPO:=TMsgPackObject.Create(mptArray);
     try
-     with Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Indexes[IndexList.GetSelectedText] do
-      begin
-        for i:=0 to IndexFields.Value-1 do
-          MPO.AsArray.Add(IndexFormatControls[i].GetMsgPack);
-        if Paging.Checked then
-          MPOSpaceData:=Select(PageNumber.Value*ItemsPerPage.Value,(PageNumber.Value+1)*ItemsPerPage.Value,StringToTTIterator(IteratorSelector.Text),MPO)
-        else
-          MPOSpaceData:=Select(StringToTTIterator(IteratorSelector.Text),MPO);
-        while SpaceData.RowCount>1 do
-          SpaceData.DeleteRow(1);
-        for i:=0 to MPOSpaceData.AsArray.Count-1 do
+      MPO:=TMsgPackObject.Create(mptArray);
+      try
+       with Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Indexes[IndexList.GetSelectedText] do
         begin
-          SpaceData.InsertRowWithValues(1,[]);
-          LIMPO:=MPOSpaceData.AsArray.Get(i).AsArray;
-          try
-            for i0:=0 to LIMPO.Count-1 do
-              if i0<Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Format.Count then
-                if LIMPO.Get(i0).GetObjectType=mptNil then
-                  SpaceData.Cells[i0,1]:='null'
+          for i:=0 to IndexFields.Value-1 do
+            MPO.AsArray.Add(IndexFormatControls[i].GetMsgPack);
+          if Paging.Checked then
+            MPOSpaceData:=Select(PageNumber.Value*ItemsPerPage.Value,(PageNumber.Value+1)*ItemsPerPage.Value,StringToTTIterator(IteratorSelector.Text),MPO)
+          else
+            MPOSpaceData:=Select(StringToTTIterator(IteratorSelector.Text),MPO);
+          while SpaceData.RowCount>1 do
+            SpaceData.DeleteRow(1);
+          for i:=0 to MPOSpaceData.AsArray.Count-1 do
+          begin
+            SpaceData.InsertRowWithValues(1,[]);
+            LIMPO:=MPOSpaceData.AsArray.Get(i).AsArray;
+            try
+              for i0:=0 to LIMPO.Count-1 do
+                if i0<Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Format.Count then
+                  if LIMPO.Get(i0).GetObjectType=mptNil then
+                    SpaceData.Cells[i0,1]:='null'
+                  else
+                    case Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Format[i0].&Type of
+                      ttUnsigned,ttInteger:
+                        SpaceData.Cells[i0,1]:=IntToStr(LIMPO.Get(i0).AsInteger);
+                      ttNumber,ttDouble:
+                        SpaceData.Cells[i0,1]:=FloatToStr(LIMPO.Get(i0).AsDouble);
+                      ttString:
+                        SpaceData.Cells[i0,1]:=LIMPO.Get(i0).AsString;
+                      ttBoolean:
+                        SpaceData.Cells[i0,1]:=BoolToStr(LIMPO.Get(i0).AsBoolean,'true','fasle');
+                      ttVarbinary:
+                        SpaceData.Cells[i0,1]:=BinToStr(LIMPO.Get(i0).AsBytes);
+                      ttArray,ttMap,ttScalar,ttDecimal:
+                        SpaceData.Cells[i0,1]:=MsgPackToStr(LIMPO.Get(i0));
+                    end
                 else
-                  case Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Format[i0].&Type of
-                    ttUnsigned,ttInteger:
-                      SpaceData.Cells[i0,1]:=IntToStr(LIMPO.Get(i0).AsInteger);
-                    ttNumber,ttDouble:
-                      SpaceData.Cells[i0,1]:=FloatToStr(LIMPO.Get(i0).AsDouble);
-                    ttString:
-                      SpaceData.Cells[i0,1]:=LIMPO.Get(i0).AsString;
-                    ttBoolean:
-                      SpaceData.Cells[i0,1]:=BoolToStr(LIMPO.Get(i0).AsBoolean,'true','fasle');
-                    ttVarbinary:
-                      SpaceData.Cells[i0,1]:=BinToStr(LIMPO.Get(i0).AsBytes);
-                    ttArray,ttMap,ttScalar,ttDecimal:
-                      SpaceData.Cells[i0,1]:=MsgPackToStr(LIMPO.Get(i0));
-                  end
-              else
-              begin
-                if i0>=SpaceData.ColCount then
-                  with SpaceData.Columns.Add do
-                    Title.Caption:='';
-                SpaceData.Cells[i0,1]:=MsgPackToStr(LIMPO.Get(i0));
-              end;  
-          finally
-            Pointer(LIMPO):=nil;
+                begin
+                  if i0>=SpaceData.ColCount then
+                    with SpaceData.Columns.Add do
+                      Title.Caption:='';
+                  SpaceData.Cells[i0,1]:=MsgPackToStr(LIMPO.Get(i0));
+                end;
+            finally
+              Pointer(LIMPO):=nil;
+            end;
           end;
+          SpaceData.AutoSizeColumns;
         end;
-        SpaceData.AutoSizeColumns;
+      finally
+        Pointer(MPO):=nil;
       end;
-    finally
-      Pointer(MPO):=nil;
+    except      
+      on E : Exception do
+        ShowMessage(E.Message);
     end;
-  end;
 end;
 
 procedure TForm1.ReloadIndexFormat();
@@ -295,8 +298,13 @@ begin
   NewSpaceForm.ShowModal;
   if NewSpaceForm.DoNew then
   begin
-    with NewSpaceForm do
-      Connections[ECTabCtrl1.TabIndex].NewSpace(SpaceName.Text,EngineSelector.Text,AsMsgPack(),NewIndexForm.AsMsgPack());
+    try
+      with NewSpaceForm do
+        Connections[ECTabCtrl1.TabIndex].NewSpace(SpaceName.Text,EngineSelector.Text,AsMsgPack(),NewIndexForm.AsMsgPack());
+    except
+      on E : Exception do
+        ShowMessage(E.Message);
+    end;
     ReloadConnectionTab();
   end;
 end;
@@ -307,7 +315,12 @@ begin
   TaskDialog1.Text:='Are you sure want to delete this space?';
   if TaskDialog1.Execute and(TaskDialog1.ModalResult=mrYes)then
   begin
-    Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Drop();
+    try
+      Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Drop();
+    except
+      on E : Exception do
+        ShowMessage(E.Message);
+    end;
     ReloadConnectionTab();
   end;
 end;
@@ -328,8 +341,13 @@ begin
   NewIndexForm.ShowModal;
   if NewIndexForm.DoNew then
   begin
-    with NewIndexForm do
-      Space.NewIndex(IndexName.Text,IsUnique.Checked,AsMsgPack());
+    try
+      with NewIndexForm do
+        Space.NewIndex(IndexName.Text,IsUnique.Checked,AsMsgPack());
+    except
+      on E : Exception do
+        ShowMessage(E.Message);
+    end;
     ReloadIndexList();
   end;
 end;                  
@@ -340,7 +358,12 @@ begin
   TaskDialog1.Text:='Are you sure want to delete this index?';
   if TaskDialog1.Execute and(TaskDialog1.ModalResult=mrYes)then
   begin
-    Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Indexes[IndexList.GetSelectedText].Drop();
+    try
+      Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Indexes[IndexList.GetSelectedText].Drop();
+    except
+      on E : Exception do
+        ShowMessage(E.Message);
+    end;
     ReloadIndexList();
   end;
 end;
@@ -352,7 +375,12 @@ begin
   NewTupleForm.ShowModal;
   if NewTupleForm.DoNew then
   begin
-    Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Insert(NewTupleForm.AsMsgPack);
+    try
+      Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Insert(NewTupleForm.AsMsgPack);
+    except
+      on E : Exception do
+        ShowMessage(E.Message);
+    end;
     ReloadSpaceData();
   end;
 end;
@@ -365,14 +393,24 @@ begin
   NewTupleForm.ShowModal;         
   if NewTupleForm.DoNew then
   begin
-    Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Replace(NewTupleForm.AsMsgPack);
+    try
+      Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Replace(NewTupleForm.AsMsgPack);
+    except
+      on E : Exception do
+        ShowMessage(E.Message);
+    end;
     ReloadSpaceData();
   end;
 end;
 
 procedure TForm1.DeleteTupleClick(Sender: TObject);
 begin
-  Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Delete(TMsgPackObject.Parse(MPOSpaceData.AsArray.Get(SpaceData.SelectedRange[0].Top-1).AsMsgPack()));
+  try
+    Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Delete(TMsgPackObject.Parse(MPOSpaceData.AsArray.Get(SpaceData.SelectedRange[0].Top-1).AsMsgPack()));
+    except
+      on E : Exception do
+        ShowMessage(E.Message);
+    end;
   ReloadIndexList();
 end;
 
@@ -437,11 +475,19 @@ begin
   ECTabCtrl1.Tabs[AIndex].Text:='Creating...';
   Form2.ShowModal;
   if Form2.DoConnection then   
-  begin
-    with Form2 do
-      Connections.Insert(AIndex,TTConnection.Create(Address.Text,Port.Value,User.Caption,Password.Text));
-    ECTabCtrl1.Tabs[AIndex].Text:=Connections[AIndex].TitleString;
-    ECTabCtrl1.Tabs[AIndex].Options:=[etoCloseable,etoCloseBtn,etoVisible];
+  begin         
+    try
+      with Form2 do
+        Connections.Insert(AIndex,TTConnection.Create(Address.Text,Port.Value,User.Caption,Password.Text));
+      ECTabCtrl1.Tabs[AIndex].Text:=Connections[AIndex].TitleString;
+      ECTabCtrl1.Tabs[AIndex].Options:=[etoCloseable,etoCloseBtn,etoVisible];
+    except
+      on E : Exception do
+      begin
+        ShowMessage(E.Message);
+        ECTabCtrl1.DeleteTab(AIndex);
+      end;
+    end;
   end
   else
     ECTabCtrl1.DeleteTab(AIndex);
@@ -470,7 +516,12 @@ end;
 
 procedure TForm1.ReloadSpacesClick(Sender: TObject);
 begin
-  Connections[ECTabCtrl1.TabIndex].ReloadSpaceList();
+  try
+    Connections[ECTabCtrl1.TabIndex].ReloadSpaceList();
+  except
+    on E : Exception do
+      ShowMessage(E.Message);
+  end;
   ReloadConnectionTab();
 end;
 

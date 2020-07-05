@@ -5,7 +5,7 @@ unit TarantoolErrors;
 interface
 
 uses
-  Classes, SysUtils, windows;
+  Classes, SysUtils;
 
 type
   TTError=(
@@ -224,30 +224,22 @@ type
     ER_NO_SUCH_SESSION_SETTING=213);
 
   TarantoolException=class(Exception)
-    public
+    public                            
       ErrCode:TTError;
-      constructor Create(AErrCode:TTError);
+      ExInfo:String;
+      constructor Create(AErrCode:TTError;AExInfo:String='');
   end;
-
-procedure PrintAsBin(Data:RawByteString);
 
 implementation
 
-procedure PrintAsBin(Data:RawByteString);
-var
-  S:String;
-  i:Integer;
-begin
-  s:='';
-  for i:=1 to Length(Data) do
-    s:=s+IntToHex(ord(Data[i]),2)+' ';
-  SetLength(s,Length(s)-1);
-  MessageBox(0,PAnsiChar(S),'BinDump',0);
-end;
-
-constructor TarantoolException.Create(AErrCode:TTError);
+constructor TarantoolException.Create(AErrCode:TTError;AExInfo:String='');
 begin
   ErrCode:=AErrCode;
+  ExInfo:=AExInfo;
+  if ExInfo='' then
+    inherited Create('TarantoolError: Code: '+IntToHex(Integer(ErrCode),2)+'h')
+  else     
+    inherited Create('TarantoolError: Code: '+IntToHex(Integer(ErrCode),2)+'h ExInfo: '+ExInfo);
 end;
 
 end.

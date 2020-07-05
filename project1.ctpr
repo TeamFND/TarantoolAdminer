@@ -14,7 +14,7 @@
       </XPManifest>
     </General>
     <BuildModes>
-      <Item Name="Default" Default="True"/>
+      <Item Name="Debug" Default="True"/>
     </BuildModes>
     <PublishOptions>
       <Version Value="2"/>
@@ -24,27 +24,6 @@
       <FormatVersion Value="2"/>
     </RunParams>
     <RequiredPackages>
-      <Item>
-        <PackageName Value="pl_LuiControls"/>
-      </Item>
-      <Item>
-        <PackageName Value="pl_Solutions"/>
-      </Item>
-      <Item>
-        <PackageName Value="lz_FpWeb"/>
-      </Item>
-      <Item>
-        <PackageName Value="lz_FpReport"/>
-      </Item>
-      <Item>
-        <PackageName Value="lz_dbExport"/>
-      </Item>
-      <Item>
-        <PackageName Value="pl_VirtualTreesExtra"/>
-      </Item>
-      <Item>
-        <PackageName Value="lz_RttiControls"/>
-      </Item>
       <Item>
         <PackageName Value="bs_Controls"/>
       </Item>
@@ -61,7 +40,6 @@
     <Units>
       <Unit>
         <Filename Value="project1.ppr"/>
-        <FRMtype Value="0"/>
         <IsPartOfProject Value="True"/>
       </Unit>
       <Unit>
@@ -83,22 +61,6 @@
         <UnitName Value="Unit2"/>
       </Unit>
       <Unit>
-        <Filename Value="Tarantool.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit>
-      <Unit>
-        <Filename Value="TarantoolErrors.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit>
-      <Unit>
-        <Filename Value="TarantoolConsts.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit>
-      <Unit>
-        <Filename Value="TarantoolTypes.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit>
-      <Unit>
         <Filename Value="NewSpace.pas"/>
         <FRMtype Value="200"/>
         <IsPartOfProject Value="True"/>
@@ -108,19 +70,18 @@
       </Unit>
       <Unit>
         <Filename Value="Utils.pas"/>
-        <FRMtype Value="0"/>
         <IsPartOfProject Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="NewIndex.pas"/>
-        <FRMtype Value="0"/>
+        <FRMtype Value="200"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="NewIndexForm"/>
         <ResourceBaseClass Value="Form"/>
       </Unit>
       <Unit>
         <Filename Value="NewTuple.pas"/>
-        <FRMtype Value="0"/>
+        <FRMtype Value="200"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="NewTupleForm"/>
         <HasResources Value="True"/>
