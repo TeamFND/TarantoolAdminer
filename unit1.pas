@@ -8,8 +8,7 @@ uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, Menus,
   ExtCtrls, StdCtrls, Spin, Grids, ECTabCtrl, ECTypes,
   Tarantool, TarantoolTypes, Generics.Collections, Unit2, NewSpace, NewIndex,
-  msgpack, Utils,
-  NewTuple;
+  msgpack, Utils, NewTuple;
 
 type
 
@@ -128,34 +127,34 @@ begin
             SpaceData.DeleteRow(1);
           for i:=0 to MPOSpaceData.AsArray.Count-1 do
           begin
-            SpaceData.InsertRowWithValues(1,[]);
+            SpaceData.InsertRowWithValues(SpaceData.RowCount,[]);
             LIMPO:=MPOSpaceData.AsArray.Get(i).AsArray;
             try
               for i0:=0 to LIMPO.Count-1 do
                 if i0<Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Format.Count then
                   if LIMPO.Get(i0).GetObjectType=mptNil then
-                    SpaceData.Cells[i0,1]:='null'
+                    SpaceData.Cells[i0,SpaceData.RowCount-1]:='null'
                   else
                     case Connections[ECTabCtrl1.TabIndex].Spaces[SpacesList.GetSelectedText].Format[i0].&Type of
                       ttUnsigned,ttInteger:
-                        SpaceData.Cells[i0,1]:=IntToStr(LIMPO.Get(i0).AsInteger);
+                        SpaceData.Cells[i0,SpaceData.RowCount-1]:=IntToStr(LIMPO.Get(i0).AsInteger);
                       ttNumber,ttDouble:
-                        SpaceData.Cells[i0,1]:=FloatToStr(LIMPO.Get(i0).AsDouble);
+                        SpaceData.Cells[i0,SpaceData.RowCount-1]:=FloatToStr(LIMPO.Get(i0).AsDouble);
                       ttString:
-                        SpaceData.Cells[i0,1]:=LIMPO.Get(i0).AsString;
+                        SpaceData.Cells[i0,SpaceData.RowCount-1]:=LIMPO.Get(i0).AsString;
                       ttBoolean:
-                        SpaceData.Cells[i0,1]:=BoolToStr(LIMPO.Get(i0).AsBoolean,'true','fasle');
+                        SpaceData.Cells[i0,SpaceData.RowCount-1]:=BoolToStr(LIMPO.Get(i0).AsBoolean,'true','fasle');
                       ttVarbinary:
-                        SpaceData.Cells[i0,1]:=BinToStr(LIMPO.Get(i0).AsBytes);
+                        SpaceData.Cells[i0,SpaceData.RowCount-1]:=BinToStr(LIMPO.Get(i0).AsBytes);
                       ttArray,ttMap,ttScalar,ttDecimal:
-                        SpaceData.Cells[i0,1]:=MsgPackToStr(LIMPO.Get(i0));
+                        SpaceData.Cells[i0,SpaceData.RowCount-1]:=MsgPackToStr(LIMPO.Get(i0));
                     end
                 else
                 begin
                   if i0>=SpaceData.ColCount then
                     with SpaceData.Columns.Add do
                       Title.Caption:='';
-                  SpaceData.Cells[i0,1]:=MsgPackToStr(LIMPO.Get(i0));
+                  SpaceData.Cells[i0,SpaceData.RowCount-1]:=MsgPackToStr(LIMPO.Get(i0));
                 end;
             finally
               Pointer(LIMPO):=nil;

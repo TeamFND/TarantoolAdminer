@@ -413,6 +413,7 @@ begin
       FreeAndNil(OData);
     end
   finally
+    Pointer(Key):=nil;
     FreeAndNil(ReqData);
   end
 end;

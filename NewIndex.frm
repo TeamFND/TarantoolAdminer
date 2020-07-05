@@ -101,7 +101,7 @@ object NewIndexForm: TNewIndexForm
         Width = 149
       end    
       item
-        Title.Caption = 'Title'
+        Title.Caption = 'Can be nil'
         Width = 150
       end>
     FixedCols = 0
